@@ -2,7 +2,7 @@
 
 ![screenshot](https://github.com/lukeb06/history.nvim/blob/master/.github/screenshot.png)
 
-A Neovim plugin for viewing and navigating your recently visited buffers.
+### A Neovim plugin for viewing and navigating your recently visited buffers.
 
 > Requires [nui.nvim](https://github.com/MunifTanjim/nui.nvim)
 
