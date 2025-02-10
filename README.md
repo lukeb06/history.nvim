@@ -1,5 +1,9 @@
 # history.nvim
 
+[![License](https://img.shields.io/github/license/lukeb06/history.nvim)](https://github.com/lukeb06/history.nvim/blob/master/LICENSE)
+
+![screenshot](https://github.com/lukeb06/history.nvim/blob/main/.github/screenshot.png)
+
 A Neovim plugin for viewing and navigating your recently visited buffers.
 
 > Requires [nui.nvim](https://github.com/MunifTanjim/nui.nvim)
