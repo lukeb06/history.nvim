@@ -2,6 +2,8 @@
 
 A Neovim plugin for viewing and navigating your recently visited buffers.
 
+> Requires [nui.nvim](https://github.com/MunifTanjim/nui.nvim)
+
 ## Installation
 
 (with lazy.nvim)
