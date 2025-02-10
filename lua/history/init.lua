@@ -3,26 +3,18 @@ local M = {}
 M.setup = function(opts)
 	local buffers = {}
 
-	-- local forward_key = "<Tab>"
-	-- local backward_key = "<S-Tab>"
-
-	opts = opts
-		or {
-			forward_key = "<Tab>",
-			backward_key = "<S-Tab>",
-			position = "50%",
-			size = {
-				width = "40%",
-				height = "60%",
-			},
-		}
+	opts = opts or {
+		forward_key = "<Tab>",
+		backward_key = "<S-Tab>",
+		width = "40%",
+		height = "60%",
+	}
 
 	local forward_key = opts.forward_key or "<Tab>"
 	local backward_key = opts.backward_key or "<S-Tab>"
-	local position = opts.position or "50%"
-	local size = opts.size or {
-		width = "40%",
-		height = "60%",
+	local size = {
+		width = opts.width or "40%",
+		height = opts.height or "60%",
 	}
 
 	vim.api.nvim_create_autocmd("BufEnter", {
@@ -72,7 +64,7 @@ M.setup = function(opts)
 		lines = array_reverse(lines)
 
 		local menu = Menu({
-			position = position,
+			position = "50%",
 			size = size,
 			border = {
 				style = "single",

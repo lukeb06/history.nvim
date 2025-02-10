@@ -16,9 +16,13 @@ return { "lukeb06/history.nvim", config = true }
 
 ## Configuration
 
+Default configuration:
+
 ```lua
 opts = {
-    forward_key = "<Tab>", -- key to open the UI. once opened, pressing this key will cycle forward through the buffer history.
-    backward_key = "<S-Tab>" -- this key does not open the UI, but will cycle backwards through the buffer history UI when open.
+    forward_key = "<Tab>", -- optional. key to open the UI. once opened, pressing this key will cycle forward through the buffer history.
+    backward_key = "<S-Tab>" -- optional. this key does not open the UI, but will cycle backwards through the buffer history UI when open.
+    width = "40%", -- optional. width of the UI, can be a percentage or a number.
+    height = "60%", -- optional. height of the UI, can be a percentage or a number.
 }
 ```
