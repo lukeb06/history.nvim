@@ -11,8 +11,8 @@ M.setup = function(opts)
 		backward_key = "<S-Tab>",
 	}
 
-	local forward_key = opts.forward_key
-	local backward_key = opts.backward_key
+	local forward_key = opts.forward_key or "<Tab>"
+	local backward_key = opts.backward_key or "<S-Tab>"
 
 	vim.api.nvim_create_autocmd("BufEnter", {
 		callback = function()
