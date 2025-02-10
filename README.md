@@ -6,7 +6,7 @@ A Neovim plugin for viewing and navigating your recently visited buffers.
 
 ## Installation
 
-(with lazy.nvim)
+> with [lazy.nvim](https://lazy.folke.io/)
 
 ```lua
 return { "lukeb06/history.nvim", config = true }
