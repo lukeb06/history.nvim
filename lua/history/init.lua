@@ -9,10 +9,17 @@ M.get_history_file = function(mode)
 	vim.fn.mkdir(history_dir, "p")
 
 	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub("\\.", "-") .. ".json"
+	local path = history_dir .. "/" .. filename
 
-	local file = io.open(history_dir .. "/" .. filename, mode)
+	if mode == "r" then
+		local file = io.open(path, "r")
+		if not file then
+			return nil
+		end
+		return file
+	end
 
-	return file
+	return io.open(path, mode)
 end
 
 M.save_buffers = function()
@@ -25,30 +32,37 @@ M.save_buffers = function()
 
 	local file = M.get_history_file()
 
-	if not file then
-		return
+	if file then
+		file:write(vim.fn.json_encode(bufs))
+		file:close()
 	end
-
-	file:write(vim.fn.json_encode(bufs))
-	file:close()
 end
 
 M.load_buffers = function()
-	local file = M.get_history_file("r")
+	vim.schedule(function() -- Ensure this runs after startup
+		local file = M.get_history_file("r")
+		if not file then
+			return
+		end
 
-	if not file then
-		return
-	end
+		local content = file:read("*a")
+		file:close()
 
-	local bufs = vim.fn.json_decode(file:read("*a"))
-	file:close()
+		local bufs = vim.fn.json_decode(content)
+		if not bufs or #bufs == 0 then
+			return
+		end
 
-	M.buffers = {}
-	for _, buf in ipairs(bufs) do
-		vim.cmd("edit " .. buf)
-		local bufnr = vim.fn.bufnr(buf)
-		table.insert(M.buffers, bufnr)
-	end
+		M.buffers = {}
+
+		for _, bufname in ipairs(bufs) do
+			if vim.fn.filereadable(bufname) == 1 then
+				vim.cmd("silent! edit " .. vim.fn.fnameescape(bufname))
+				local bufnr = vim.fn.bufnr(bufname)
+				table.insert(M.buffers, bufnr)
+			end
+		end
+	end)
 end
 
 M.setup = function(opts)
