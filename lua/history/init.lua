@@ -45,7 +45,8 @@ M.load_buffers = function()
 
 	for _, buf in ipairs(bufs) do
 		vim.cmd("edit " .. buf)
-		vim.notify("loaded " .. buf)
+		local bufnr = vim.fn.bufnr(buf)
+		vim.notify("loaded " .. bufnr)
 	end
 end
 
