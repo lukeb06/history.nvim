@@ -43,7 +43,9 @@ M.load_buffers = function()
 	local bufs = vim.fn.json_decode(file:read("*a"))
 	file:close()
 
-	vim.notify(bufs, vim.inspect(bufs))
+	for _, buf in ipairs(bufs) do
+		vim.cmd("edit " .. buf)
+	end
 end
 
 M.setup = function(opts)
