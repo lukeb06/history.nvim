@@ -8,7 +8,7 @@ M.get_history_file = function(mode)
 	local history_dir = data_dir .. "/history.nvim"
 	vim.fn.mkdir(history_dir, "p")
 
-	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub(".", "-") .. ".json"
+	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub("\\.", "-") .. ".json"
 
 	local file = io.open(history_dir .. "/" .. filename, mode)
 
