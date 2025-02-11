@@ -1,8 +1,8 @@
 local M = {}
 
-M.setup = function(opts)
-	local buffers = {}
+M.buffers = {}
 
+M.setup = function(opts)
 	opts = opts or {
 		forward_key = "<Tab>",
 		backward_key = "<S-Tab>",
@@ -22,13 +22,13 @@ M.setup = function(opts)
 			local bufnr = vim.fn.bufnr("%")
 			local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
 			if buftype ~= "nofile" then
-				for i, buf in ipairs(buffers) do
+				for i, buf in ipairs(M.buffers) do
 					if buf == bufnr then
-						table.remove(buffers, i)
+						table.remove(M.buffers, i)
 					end
 				end
 
-				table.insert(buffers, bufnr)
+				table.insert(M.buffers, bufnr)
 			end
 		end,
 	})
@@ -46,7 +46,7 @@ M.setup = function(opts)
 	local function create_menu()
 		local lines = {}
 
-		for _, buf in ipairs(buffers) do
+		for _, buf in ipairs(M.buffers) do
 			if vim.api.nvim_buf_is_valid(buf) then
 				local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
 				if buftype ~= "nofile" then
