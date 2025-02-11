@@ -2,6 +2,50 @@ local M = {}
 
 M.buffers = {}
 
+M.get_history_file = function(mode)
+	mode = mode or "w"
+	local data_dir = vim.fn.stdpath("data")
+	local history_dir = data_dir .. "/history.nvim"
+	vim.fn.mkdir(history_dir, "p")
+
+	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub(".", "-") .. ".json"
+
+	local file = io.open(history_dir .. "/" .. filename, mode)
+
+	return file
+end
+
+M.save_buffers = function()
+	local bufs = {}
+	for _, buf in ipairs(M.buffers) do
+		if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buflisted then
+			table.insert(bufs, vim.api.nvim_buf_get_name(buf))
+		end
+	end
+
+	local file = M.get_history_file()
+
+	if not file then
+		return
+	end
+
+	file:write(vim.fn.json_encode(bufs))
+	file:close()
+end
+
+M.load_buffers = function()
+	local file = M.get_history_file("r")
+
+	if not file then
+		return
+	end
+
+	local bufs = vim.fn.json_decode(file:read("*a"))
+	file:close()
+
+	vim.notify(bufs, vim.inspect(bufs))
+end
+
 M.setup = function(opts)
 	opts = opts or {
 		forward_key = "<Tab>",
