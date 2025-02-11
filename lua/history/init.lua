@@ -45,8 +45,8 @@ M.load_buffers = function()
 
 	for _, buf in ipairs(bufs) do
 		vim.cmd("edit " .. buf)
-		-- local bufnr = vim.fn.bufnr(buf)
-		--       table.insert(M.buffers, bufnr)
+		local bufnr = vim.fn.bufnr(buf)
+		table.insert(M.buffers, bufnr)
 	end
 end
 
@@ -68,6 +68,15 @@ M.setup = function(opts)
 	}
 	local persist = opts.persist or true
 
+	if persist then
+		vim.api.nvim_create_autocmd("VimLeavePre", {
+			callback = M.save_buffers,
+		})
+		vim.api.nvim_create_autocmd("VimEnter", {
+			callback = M.load_buffers,
+		})
+	end
+
 	vim.api.nvim_create_autocmd("BufEnter", {
 		callback = function()
 			local bufnr = vim.fn.bufnr("%")
@@ -83,15 +92,6 @@ M.setup = function(opts)
 			end
 		end,
 	})
-
-	if persist then
-		vim.api.nvim_create_autocmd("VimLeavePre", {
-			callback = M.save_buffers,
-		})
-		vim.api.nvim_create_autocmd("VimEnter", {
-			callback = M.load_buffers,
-		})
-	end
 
 	local Menu = require("nui.menu")
 
