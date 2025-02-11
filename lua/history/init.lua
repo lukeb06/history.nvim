@@ -2,13 +2,78 @@ local M = {}
 
 M.buffers = {}
 
+M.get_history_file = function(mode)
+	mode = mode or "w"
+	local data_dir = vim.fn.stdpath("data")
+	local history_dir = data_dir .. "/history.nvim"
+	vim.fn.mkdir(history_dir, "p")
+
+	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub("\\.", "-") .. ".json"
+	local path = history_dir .. "/" .. filename
+
+	if mode == "r" then
+		local file = io.open(path, "r")
+		if not file then
+			return nil
+		end
+		return file
+	end
+
+	return io.open(path, mode)
+end
+
+M.save_buffers = function()
+	local bufs = {}
+	for _, buf in ipairs(M.buffers) do
+		if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buflisted then
+			table.insert(bufs, vim.api.nvim_buf_get_name(buf))
+		end
+	end
+
+	local file = M.get_history_file()
+
+	if file then
+		file:write(vim.fn.json_encode(bufs))
+		file:close()
+	end
+end
+
+M.load_buffers = function()
+	vim.schedule(function() -- Ensure this runs after startup
+		local file = M.get_history_file("r")
+		if not file then
+			return
+		end
+
+		local content = file:read("*a")
+		file:close()
+
+		local bufs = vim.fn.json_decode(content)
+		if not bufs or #bufs == 0 then
+			return
+		end
+
+		M.buffers = {}
+
+		for _, bufname in ipairs(bufs) do
+			if vim.fn.filereadable(bufname) == 1 then
+				vim.cmd("silent! edit " .. vim.fn.fnameescape(bufname))
+				-- local bufnr = vim.fn.bufnr(bufname)
+				-- table.insert(M.buffers, bufnr)
+			end
+		end
+	end)
+end
+
 M.setup = function(opts)
-	opts = opts or {
-		forward_key = "<Tab>",
-		backward_key = "<S-Tab>",
-		width = "40%",
-		height = "60%",
-	}
+	opts = opts
+		or {
+			forward_key = "<Tab>",
+			backward_key = "<S-Tab>",
+			width = "40%",
+			height = "60%",
+			persist = true,
+		}
 
 	local forward_key = opts.forward_key or "<Tab>"
 	local backward_key = opts.backward_key or "<S-Tab>"
@@ -16,6 +81,7 @@ M.setup = function(opts)
 		width = opts.width or "40%",
 		height = opts.height or "60%",
 	}
+	local persist = opts.persist or true
 
 	vim.api.nvim_create_autocmd("BufEnter", {
 		callback = function()
@@ -32,6 +98,15 @@ M.setup = function(opts)
 			end
 		end,
 	})
+
+	if persist then
+		vim.api.nvim_create_autocmd("VimLeavePre", {
+			callback = M.save_buffers,
+		})
+		vim.api.nvim_create_autocmd("VimEnter", {
+			callback = M.load_buffers,
+		})
+	end
 
 	local Menu = require("nui.menu")
 
