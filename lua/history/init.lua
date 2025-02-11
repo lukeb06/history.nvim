@@ -49,12 +49,14 @@ M.load_buffers = function()
 end
 
 M.setup = function(opts)
-	opts = opts or {
-		forward_key = "<Tab>",
-		backward_key = "<S-Tab>",
-		width = "40%",
-		height = "60%",
-	}
+	opts = opts
+		or {
+			forward_key = "<Tab>",
+			backward_key = "<S-Tab>",
+			width = "40%",
+			height = "60%",
+			persist = true,
+		}
 
 	local forward_key = opts.forward_key or "<Tab>"
 	local backward_key = opts.backward_key or "<S-Tab>"
@@ -62,6 +64,20 @@ M.setup = function(opts)
 		width = opts.width or "40%",
 		height = opts.height or "60%",
 	}
+	local persist = opts.persist or true
+
+	if persist then
+		vim.api.nvim_create_autocmd("VimLeavePre", {
+			callback = function()
+				M.save_buffers()
+			end,
+		})
+		vim.api.nvim_create_autocmd("VimEnter", {
+			callback = function()
+				M.load_buffers()
+			end,
+		})
+	end
 
 	vim.api.nvim_create_autocmd("BufEnter", {
 		callback = function()
