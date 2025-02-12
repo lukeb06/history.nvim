@@ -55,6 +55,8 @@ M.load_buffers = function()
 
 		M.buffers = {}
 
+		vim.api.nvim_feedkeys("mZ", "n", false)
+
 		for _, bufname in ipairs(bufs) do
 			if vim.fn.filereadable(bufname) == 1 then
 				vim.cmd("silent! edit " .. vim.fn.fnameescape(bufname))
@@ -62,6 +64,8 @@ M.load_buffers = function()
 				-- table.insert(M.buffers, bufnr)
 			end
 		end
+
+		vim.api.nvim_feedkeys("`Z", "n", false)
 	end)
 end
 
