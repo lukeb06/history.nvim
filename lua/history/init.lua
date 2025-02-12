@@ -124,6 +124,15 @@ M.setup = function(opts)
 		return x
 	end
 
+	local function escape_pattern(text)
+		local ret = text:gsub("([^%w])", "%%%1")
+		ret = ret:gsub("%%%$", "$")
+		ret = ret:gsub("%$$", "%%$")
+		ret = ret:gsub("%%%^", "^")
+		ret = ret:gsub("^%^", "%%^")
+		return ret
+	end
+
 	local function create_menu()
 		local lines = {}
 
@@ -134,6 +143,7 @@ M.setup = function(opts)
 					local name = vim.api.nvim_buf_get_name(buf)
 					local cwd = vim.fn.getcwd()
 
+					name = escape_pattern(name)
 					name = string.gsub(name, cwd .. "/", "")
 
 					local item = Menu.item(name, { bufnr = buf })
