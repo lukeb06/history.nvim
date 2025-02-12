@@ -58,8 +58,6 @@ M.load_buffers = function()
 		for _, bufname in ipairs(bufs) do
 			if vim.fn.filereadable(bufname) == 1 then
 				vim.cmd("silent! edit " .. vim.fn.fnameescape(bufname))
-				-- local bufnr = vim.fn.bufnr(bufname)
-				-- table.insert(M.buffers, bufnr)
 			end
 		end
 	end)
