@@ -55,6 +55,7 @@ M.load_buffers = function()
 
 		M.buffers = {}
 
+		vim.api.nvim_feedkeys("M", "n", false)
 		vim.api.nvim_feedkeys("mZ", "n", false)
 
 		for _, bufname in ipairs(bufs) do
