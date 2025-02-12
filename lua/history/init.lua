@@ -143,8 +143,8 @@ M.setup = function(opts)
 					local name = vim.api.nvim_buf_get_name(buf)
 					local cwd = vim.fn.getcwd()
 
-					name = escape_pattern(name)
-					name = string.gsub(name, cwd .. "/", "")
+					local match = escape_pattern(cwd .. "/")
+					name = string.gsub(name, match, "")
 
 					local item = Menu.item(name, { bufnr = buf })
 					table.insert(lines, item)
