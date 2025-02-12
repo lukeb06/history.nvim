@@ -150,7 +150,7 @@ M.setup = function(opts)
 			border = {
 				style = "single",
 				text = {
-					top = "{history.nvim}",
+					top = "[ history.nvim ]",
 					top_align = "center",
 				},
 			},
