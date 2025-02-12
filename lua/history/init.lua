@@ -58,8 +58,6 @@ M.load_buffers = function()
 		for _, bufname in ipairs(bufs) do
 			if vim.fn.filereadable(bufname) == 1 then
 				vim.cmd("silent! edit " .. vim.fn.fnameescape(bufname))
-				-- local bufnr = vim.fn.bufnr(bufname)
-				-- table.insert(M.buffers, bufnr)
 			end
 		end
 	end)
@@ -126,6 +124,15 @@ M.setup = function(opts)
 		return x
 	end
 
+	local function escape_pattern(text)
+		local ret = text:gsub("([^%w])", "%%%1")
+		ret = ret:gsub("%%%$", "$")
+		ret = ret:gsub("%$$", "%%$")
+		ret = ret:gsub("%%%^", "^")
+		ret = ret:gsub("^%^", "%%^")
+		return ret
+	end
+
 	local function create_menu()
 		local lines = {}
 
@@ -136,7 +143,8 @@ M.setup = function(opts)
 					local name = vim.api.nvim_buf_get_name(buf)
 					local cwd = vim.fn.getcwd()
 
-					name = name:gsub(cwd .. "/", "")
+					local match = escape_pattern(cwd .. "/")
+					name = string.gsub(name, match, "")
 
 					local item = Menu.item(name, { bufnr = buf })
 					table.insert(lines, item)
