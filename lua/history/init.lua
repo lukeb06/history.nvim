@@ -144,7 +144,7 @@ M.setup = function(opts)
 					local cwd = vim.fn.getcwd()
 
 					local match = escape_pattern(cwd .. "/")
-					name = string.gsub(name, match, "")
+					name = name:gsub(match, "")
 
 					local item = Menu.item(name, { bufnr = buf })
 					table.insert(lines, item)
