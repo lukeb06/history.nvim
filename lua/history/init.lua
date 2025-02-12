@@ -101,10 +101,18 @@ M.setup = function(opts)
 
 	if persist then
 		vim.api.nvim_create_autocmd("VimLeavePre", {
-			callback = M.save_buffers,
+			callback = function()
+				if vim.fn.argc(-1) == 0 then
+					M.save_buffers()
+				end
+			end,
 		})
 		vim.api.nvim_create_autocmd("VimEnter", {
-			callback = M.load_buffers,
+			callback = function()
+				if vim.fn.argc(-1) == 0 then
+					M.load_buffers()
+				end
+			end,
 		})
 	end
 
