@@ -135,6 +135,9 @@ M.setup = function(opts)
 
 	local function create_menu()
 		local lines = {}
+		-- Add these required components at the top of your file
+		local NuiText = require("nui.text")
+		local NuiLine = require("nui.line")
 
 		for _, buf in ipairs(M.buffers) do
 			if vim.api.nvim_buf_is_valid(buf) then
@@ -153,12 +156,12 @@ M.setup = function(opts)
 						dir = ""
 					end
 
-					-- Create menu item with styled text
-					local item = Menu.item({
-						{ text = dir, hl = "Comment" },
-						{ text = filename, hl = "Normal" },
-					}, { bufnr = buf })
+					-- Create styled line using Nui components
+					local line = NuiLine()
+					line:append(NuiText(dir, "Comment")) -- Grey directory
+					line:append(NuiText(filename, "Normal")) -- White filename
 
+					local item = Menu.item(line, { bufnr = buf })
 					table.insert(lines, item)
 				end
 			end
