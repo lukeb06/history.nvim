@@ -1,5 +1,8 @@
 local M = {}
 
+local mini_icons_available, mini_icons = pcall(require, "mini.icons")
+local web_devicons_available = pcall(require, "nvim-web-devicons")
+
 M.buffers = {}
 
 M.get_history_file = function(mode)
@@ -71,7 +74,35 @@ M.setup = function(opts)
 			width = "40%",
 			height = "60%",
 			persist = true,
+			icons = {
+				enable = false,
+				style = "mini", -- 'mini' or 'web'
+				custom = {}, -- Override specific icons
+			},
 		}
+
+	-- Merge icon configuration
+	M.icons = vim.tbl_deep_extend("force", {
+		enable = false,
+		style = "mini",
+		custom = {},
+	}, opts.icons or {})
+
+	-- Configure icon providers
+	M.icon_providers = {
+		mini = function(filetype, filename)
+			if mini_icons_available then
+				return mini_icons.get_icon(filetype, filename, "default")
+			end
+			return "󰈚" -- Fallback icon
+		end,
+		web = function(filetype, filename)
+			if web_devicons_available then
+				return require("nvim-web-devicons").get_icon(filename, filetype)
+			end
+			return nil
+		end,
+	}
 
 	local forward_key = opts.forward_key or "<Tab>"
 	local backward_key = opts.backward_key or "<S-Tab>"
@@ -135,7 +166,6 @@ M.setup = function(opts)
 
 	local function create_menu()
 		local lines = {}
-		-- Add these required components at the top of your file
 		local NuiText = require("nui.text")
 		local NuiLine = require("nui.line")
 
@@ -145,21 +175,39 @@ M.setup = function(opts)
 				if buftype ~= "nofile" then
 					local name = vim.api.nvim_buf_get_name(buf)
 					local cwd = vim.fn.getcwd()
+					local ft = vim.bo[buf].filetype
+
+					-- Icon handling
+					local icon = ""
+					if M.icons.enable then
+						-- Get icon based on configuration
+						local icon_char = M.icons.custom[ft]
+							or M.icon_providers[M.icons.style](ft, name)
+							or M.icon_providers.mini(ft, name)
+
+						-- Fallback to mini if web provider failed
+						if not icon_char and M.icons.style == "web" then
+							icon_char = M.icon_providers.mini(ft, name)
+						end
+
+						icon = icon_char .. " "
+					end
 
 					local match = escape_pattern(cwd .. "/")
 					name = name:gsub(match, "")
 
-					-- Split the name into directory and filename
+					-- Split path components
 					local dir, filename = name:match("^(.*/)([^/]+)$")
-					if not dir then
-						filename = name
-						dir = ""
-					end
+					dir = dir or ""
+					filename = filename or name
 
-					-- Create styled line using Nui components
+					-- Create styled line
 					local line = NuiLine()
-					line:append(NuiText(dir, "Comment")) -- Grey directory
-					line:append(NuiText(filename, "Normal")) -- White filename
+					if M.icons.enable then
+						line:append(NuiText(icon, "Comment"))
+					end
+					line:append(NuiText(dir, "Comment"))
+					line:append(NuiText(filename, "Normal"))
 
 					local item = Menu.item(line, { bufnr = buf })
 					table.insert(lines, item)
