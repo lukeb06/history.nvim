@@ -1,6 +1,6 @@
 # history.nvim
 
-![screenshot](https://github.com/lukeb06/history.nvim/blob/master/.github/screenshot.png)
+![https://github.com/lukeb06/history.nvim/blob/master/.github/screenshot.png](https://github.com/lukeb06/history.nvim/blob/master/.github/screenshot.png?raw=true)
 
 ### A Neovim plugin for viewing and navigating your recently visited buffers.
 
