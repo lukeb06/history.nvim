@@ -92,8 +92,8 @@ M.setup = function(opts)
 	M.icon_providers = {
 		mini = function(filetype)
 			if mini_icons_available then
-				-- Use mini.icons' per-filetype mapping
-				return mini_icons.filetype_icons[filetype] or mini_icons.filetype_icons.default
+				-- Access icons through the correct mini.icons structure
+				return mini_icons.filetype[filetype] or mini_icons.common.file
 			end
 			return "󰈚" -- Fallback icon
 		end,
