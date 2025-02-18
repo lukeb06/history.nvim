@@ -90,9 +90,10 @@ M.setup = function(opts)
 
 	-- Configure icon providers
 	M.icon_providers = {
-		mini = function(filetype, filename)
+		mini = function(filetype)
 			if mini_icons_available then
-				return mini_icons.get_icon(filetype, filename, "default")
+				-- Use mini.icons' per-filetype mapping
+				return mini_icons.filetype_icons[filetype] or mini_icons.filetype_icons.default
 			end
 			return "󰈚" -- Fallback icon
 		end,
@@ -183,14 +184,14 @@ M.setup = function(opts)
 						-- Get icon based on configuration
 						local icon_char = M.icons.custom[ft]
 							or M.icon_providers[M.icons.style](ft, name)
-							or M.icon_providers.mini(ft, name)
+							or M.icon_providers.mini(ft)
 
 						-- Fallback to mini if web provider failed
 						if not icon_char and M.icons.style == "web" then
-							icon_char = M.icon_providers.mini(ft, name)
+							icon_char = M.icon_providers.mini(ft)
 						end
 
-						icon = icon_char .. " "
+						icon = icon_char and (icon_char .. " ") or ""
 					end
 
 					local match = escape_pattern(cwd .. "/")
