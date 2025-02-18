@@ -6,7 +6,7 @@ local web_devicons_available = pcall(require, "nvim-web-devicons")
 if mini_icons_available then
 	mini_icons.setup({
 		mappings = {
-			filetype = true, -- Enable filetype icons and highlights
+			filetype = true, -- CRUCIAL: Enable filetype icons
 		},
 	})
 end
@@ -110,10 +110,11 @@ M.setup = function(opts)
 	M.icon_providers = {
 		mini = function(filetype)
 			if mini_icons_available then
-				local data = mini_icons.get("filetype", filetype) or mini_icons.get("common", "file")
-				return data.icon, data.hl_group
+				-- Access icons through properly initialized filetype table
+				local ft_data = mini_icons.filetype[filetype] or mini_icons.common.file
+				return ft_data.icon, ft_data.hl_group
 			end
-			return "󰈚", "Normal" -- Fallback
+			return "󰈚", "Normal" -- Fallback icon
 		end,
 		web = function(filetype, filename)
 			if pcall(require, "nvim-web-devicons") then
@@ -203,10 +204,17 @@ M.setup = function(opts)
 							icon_char = M.icons.custom[ft]
 							hl_group = "Normal"
 						else
-							-- Get icon data with proper highlight group
+							-- First try configured style
 							icon_char, hl_group = M.icon_providers[M.icons.style](ft, name)
+
+							-- Fallback to mini if web fails
 							if not icon_char and M.icons.style == "web" then
 								icon_char, hl_group = M.icon_providers.mini(ft)
+							end
+
+							-- Final fallback
+							if not icon_char then
+								icon_char, hl_group = "󰈚", "Normal"
 							end
 						end
 					end
@@ -223,7 +231,7 @@ M.setup = function(opts)
 					local line = NuiLine()
 					if M.icons.enable and icon_char then
 						line:append(NuiText(" ", "Comment")) -- Left padding
-						line:append(NuiText(icon_char .. " ", hl_group)) -- Colored icon
+						line:append(NuiText(icon_char .. " ", hl_group)) -- Icon with color
 					end
 					line:append(NuiText(dir, "Comment"))
 					line:append(NuiText(filename, "Normal"))
