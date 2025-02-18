@@ -3,6 +3,10 @@ local M = {}
 local mini_icons_available, mini_icons = pcall(require, "mini.icons")
 local web_devicons_available = pcall(require, "nvim-web-devicons")
 
+if mini_icons_available then
+	mini_icons.setup() -- This creates the highlight groups
+end
+
 local fallback_icons = {
 	default = "󰈚",
 	lua = "󰢱",
@@ -101,16 +105,16 @@ M.setup = function(opts)
 	-- Configure icon providers
 	M.icon_providers = {
 		mini = function(filetype)
-			if mini_icons_available and mini_icons.filetype then
-				local icon = mini_icons.filetype[filetype] or mini_icons.common.file
-				return icon, "MiniIcons" .. filetype -- Use mini.icons' default highlights
+			if mini_icons_available then
+				local icon_data = mini_icons.get_icon_data(filetype) or mini_icons.get_icon_data("default")
+				return icon_data.icon, icon_data.hl_group
 			end
 			return fallback_icons[filetype] or fallback_icons.default, "Normal"
 		end,
 		web = function(filetype, filename)
 			if web_devicons_available then
 				local icon, hl = require("nvim-web-devicons").get_icon(filename, filetype)
-				return icon, hl or "DevIconDefault"
+				return icon, hl
 			end
 			return nil, nil
 		end,
@@ -216,9 +220,9 @@ M.setup = function(opts)
 					-- Create styled line
 					local line = NuiLine()
 					if M.icons.enable and icon_char then
-						-- Add padding space before icon (uses directory color)
-						line:append(NuiText(" ", "Comment"))
-						-- Add icon with proper highlight and trailing space
+						-- Add 1 character padding before icon (using directory color)
+						line:append(NuiText(" ", "Comment")) -- Padding space
+						-- Add icon with its proper color and trailing space
 						line:append(NuiText(icon_char .. " ", hl_group))
 					end
 					line:append(NuiText(dir, "Comment"))
