@@ -98,19 +98,21 @@ M.setup = function(opts)
 		custom = {},
 	}, opts.icons or {})
 
-	-- Configure icon providers with safe access
+	-- Configure icon providers
 	M.icon_providers = {
 		mini = function(filetype)
 			if mini_icons_available and mini_icons.filetype then
-				return mini_icons.filetype[filetype] or mini_icons.common.file
+				local icon = mini_icons.filetype[filetype] or mini_icons.common.file
+				return icon, "MiniIcons" .. filetype -- Use mini.icons' default highlights
 			end
-			return fallback_icons[filetype] or fallback_icons.default
+			return fallback_icons[filetype] or fallback_icons.default, "Normal"
 		end,
 		web = function(filetype, filename)
 			if web_devicons_available then
-				return require("nvim-web-devicons").get_icon(filename, filetype)
+				local icon, hl = require("nvim-web-devicons").get_icon(filename, filetype)
+				return icon, hl or "DevIconDefault"
 			end
-			return nil
+			return nil, nil
 		end,
 	}
 
@@ -188,18 +190,19 @@ M.setup = function(opts)
 					local ft = vim.bo[buf].filetype
 
 					-- Icon handling with safe fallbacks
-					local icon = ""
+					local icon_char, hl_group
 					if M.icons.enable then
-						local icon_char = M.icons.custom[ft]
-							or M.icon_providers[M.icons.style](ft, name)
-							or M.icon_providers.mini(ft)
-
-						-- Fallback to mini style if web fails
-						if not icon_char and M.icons.style == "web" then
-							icon_char = M.icon_providers.mini(ft)
+						-- Get icon based on configuration
+						if M.icons.custom[ft] then
+							icon_char = M.icons.custom[ft]
+							hl_group = "Normal" -- Default highlight for custom icons
+						else
+							icon_char, hl_group = M.icon_providers[M.icons.style](ft, name)
+							-- Fallback to mini style if web provider failed
+							if not icon_char and M.icons.style == "web" then
+								icon_char, hl_group = M.icon_providers.mini(ft)
+							end
 						end
-
-						icon = icon_char and (icon_char .. " ") or ""
 					end
 
 					local match = escape_pattern(cwd .. "/")
@@ -212,8 +215,11 @@ M.setup = function(opts)
 
 					-- Create styled line
 					local line = NuiLine()
-					if M.icons.enable then
-						line:append(NuiText(icon, "Comment"))
+					if M.icons.enable and icon_char then
+						-- Add padding space before icon (uses directory color)
+						line:append(NuiText(" ", "Comment"))
+						-- Add icon with proper highlight and trailing space
+						line:append(NuiText(icon_char .. " ", hl_group))
 					end
 					line:append(NuiText(dir, "Comment"))
 					line:append(NuiText(filename, "Normal"))
