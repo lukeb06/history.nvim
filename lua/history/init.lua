@@ -106,16 +106,15 @@ M.setup = function(opts)
 	M.icon_providers = {
 		mini = function(filetype)
 			if mini_icons_available then
-				-- Use direct table access for icons
-				local icon = mini_icons.filetype[filetype] or mini_icons.common.file
-				-- Construct highlight group name according to mini.icons convention
+				-- Use correct access pattern for mini.icons v0.9.0+
+				local icon = mini_icons.get("filetype", filetype) or mini_icons.get("common", "file")
 				local hl_group = "MiniIconsFiletype" .. filetype:gsub("^%l", string.upper)
 				return icon, hl_group
 			end
-			return fallback_icons[filetype] or fallback_icons.default, "Normal"
+			return "󰈚", "Normal" -- Fallback
 		end,
 		web = function(filetype, filename)
-			if web_devicons_available then
+			if pcall(require, "nvim-web-devicons") then
 				return require("nvim-web-devicons").get_icon(filename, filetype)
 			end
 			return nil, nil
@@ -198,13 +197,12 @@ M.setup = function(opts)
 					-- Icon handling with safe fallbacks
 					local icon_char, hl_group
 					if M.icons.enable then
-						-- Get icon based on configuration
 						if M.icons.custom[ft] then
 							icon_char = M.icons.custom[ft]
-							hl_group = "Normal" -- Default highlight for custom icons
+							hl_group = "Normal"
 						else
+							-- Get icon with safe fallbacks
 							icon_char, hl_group = M.icon_providers[M.icons.style](ft, name)
-							-- Fallback to mini style if web provider failed
 							if not icon_char and M.icons.style == "web" then
 								icon_char, hl_group = M.icon_providers.mini(ft)
 							end
@@ -222,10 +220,8 @@ M.setup = function(opts)
 					-- Create styled line
 					local line = NuiLine()
 					if M.icons.enable and icon_char then
-						-- Add 1 character padding before icon (grey)
-						line:append(NuiText(" ", "Comment"))
-						-- Add icon with color and trailing space
-						line:append(NuiText(icon_char .. " ", hl_group))
+						line:append(NuiText(" ", "Comment")) -- Left padding
+						line:append(NuiText(icon_char .. " ", hl_group)) -- Icon with color
 					end
 					line:append(NuiText(dir, "Comment"))
 					line:append(NuiText(filename, "Normal"))
