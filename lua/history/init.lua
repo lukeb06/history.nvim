@@ -2,6 +2,8 @@ local M = {}
 
 M.buffers = {}
 
+M.icons = { enable = false, custom = {} }
+
 M.get_history_file = function(mode)
 	mode = mode or "w"
 	local data_dir = vim.fn.stdpath("data")
@@ -71,7 +73,17 @@ M.setup = function(opts)
 			width = "40%",
 			height = "60%",
 			persist = true,
+			icons = {
+				enable = false,
+				custom = {},
+			},
 		}
+
+	-- Merge icon configuration
+	M.icons = vim.tbl_deep_extend("force", {
+		enable = false,
+		custom = {},
+	}, opts.icons or {})
 
 	local forward_key = opts.forward_key or "<Tab>"
 	local backward_key = opts.backward_key or "<S-Tab>"
@@ -135,6 +147,15 @@ M.setup = function(opts)
 
 	local function create_menu()
 		local lines = {}
+		local NuiText = require("nui.text")
+		local NuiLine = require("nui.line")
+		local web_devicons_available, web_devicons = pcall(require, "nvim-web-devicons")
+
+		-- Warn if web-devicons isn't installed but icons are enabled
+		if M.icons.enable and not web_devicons_available then
+			vim.notify_once("history.nvim: nvim-web-devicons not installed, disabling icons", vim.log.levels.WARN)
+			M.icons.enable = false
+		end
 
 		for _, buf in ipairs(M.buffers) do
 			if vim.api.nvim_buf_is_valid(buf) then
@@ -142,11 +163,38 @@ M.setup = function(opts)
 				if buftype ~= "nofile" then
 					local name = vim.api.nvim_buf_get_name(buf)
 					local cwd = vim.fn.getcwd()
+					local ft = vim.bo[buf].filetype
+
+					-- Get icon with custom override
+					local icon, hl = " ", "Normal"
+					if M.icons.enable then
+						-- Use custom icon if defined
+						if M.icons.custom[ft] then
+							icon = M.icons.custom[ft]
+						else
+							icon, hl = web_devicons.get_icon(name, ft)
+						end
+						icon = icon or " " -- Fallback to space if no icon found
+					end
 
 					local match = escape_pattern(cwd .. "/")
 					name = name:gsub(match, "")
 
-					local item = Menu.item(name, { bufnr = buf })
+					-- Split path components
+					local dir, filename = name:match("^(.*/)([^/]+)$")
+					dir = dir or ""
+					filename = filename or name
+
+					-- Create styled line
+					local line = NuiLine()
+					if M.icons.enable then
+						line:append(NuiText(" ", "Comment")) -- Left padding
+						line:append(NuiText(icon .. " ", hl)) -- Icon with color
+					end
+					line:append(NuiText(dir, "Comment"))
+					line:append(NuiText(filename, "Normal"))
+
+					local item = Menu.item(line, { bufnr = buf })
 					table.insert(lines, item)
 				end
 			end
