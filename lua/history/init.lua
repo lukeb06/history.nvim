@@ -1,27 +1,8 @@
 local M = {}
 
-local mini_icons_available, mini_icons = pcall(require, "mini.icons")
-local web_devicons_available = pcall(require, "nvim-web-devicons")
-
-if mini_icons_available then
-	mini_icons.setup({
-		mappings = {
-			filetype = true, -- CRUCIAL: Enable filetype icons
-		},
-	})
-end
-
-local fallback_icons = {
-	default = "󰈚",
-	lua = "󰢱",
-	python = "󰌠",
-	javascript = "󰌞",
-	html = "󰄻",
-	css = "󰌜",
-	-- Add more filetypes as needed
-}
-
 M.buffers = {}
+
+M.icons = { enable = false, custom = {} }
 
 M.get_history_file = function(mode)
 	mode = mode or "w"
@@ -94,7 +75,6 @@ M.setup = function(opts)
 			persist = true,
 			icons = {
 				enable = false,
-				style = "mini", -- 'mini' or 'web'
 				custom = {},
 			},
 		}
@@ -102,27 +82,8 @@ M.setup = function(opts)
 	-- Merge icon configuration
 	M.icons = vim.tbl_deep_extend("force", {
 		enable = false,
-		style = "mini",
 		custom = {},
 	}, opts.icons or {})
-
-	-- Configure icon providers
-	M.icon_providers = {
-		mini = function(filetype)
-			if mini_icons_available then
-				-- Access icons through properly initialized filetype table
-				local ft_data = mini_icons.filetype[filetype] or mini_icons.common.file
-				return ft_data.icon, ft_data.hl_group
-			end
-			return "󰈚", "Normal" -- Fallback icon
-		end,
-		web = function(filetype, filename)
-			if pcall(require, "nvim-web-devicons") then
-				return require("nvim-web-devicons").get_icon(filename, filetype)
-			end
-			return nil, nil
-		end,
-	}
 
 	local forward_key = opts.forward_key or "<Tab>"
 	local backward_key = opts.backward_key or "<S-Tab>"
@@ -188,6 +149,13 @@ M.setup = function(opts)
 		local lines = {}
 		local NuiText = require("nui.text")
 		local NuiLine = require("nui.line")
+		local web_devicons_available, web_devicons = pcall(require, "nvim-web-devicons")
+
+		-- Warn if web-devicons isn't installed but icons are enabled
+		if M.icons.enable and not web_devicons_available then
+			vim.notify_once("history.nvim: nvim-web-devicons not installed, disabling icons", vim.log.levels.WARN)
+			M.icons.enable = false
+		end
 
 		for _, buf in ipairs(M.buffers) do
 			if vim.api.nvim_buf_is_valid(buf) then
@@ -197,26 +165,16 @@ M.setup = function(opts)
 					local cwd = vim.fn.getcwd()
 					local ft = vim.bo[buf].filetype
 
-					-- Icon handling with safe fallbacks
-					local icon_char, hl_group
+					-- Get icon with custom override
+					local icon, hl = " ", "Normal"
 					if M.icons.enable then
+						-- Use custom icon if defined
 						if M.icons.custom[ft] then
-							icon_char = M.icons.custom[ft]
-							hl_group = "Normal"
+							icon = M.icons.custom[ft]
 						else
-							-- First try configured style
-							icon_char, hl_group = M.icon_providers[M.icons.style](ft, name)
-
-							-- Fallback to mini if web fails
-							if not icon_char and M.icons.style == "web" then
-								icon_char, hl_group = M.icon_providers.mini(ft)
-							end
-
-							-- Final fallback
-							if not icon_char then
-								icon_char, hl_group = "󰈚", "Normal"
-							end
+							icon, hl = web_devicons.get_icon(name, ft)
 						end
+						icon = icon or " " -- Fallback to space if no icon found
 					end
 
 					local match = escape_pattern(cwd .. "/")
@@ -229,9 +187,9 @@ M.setup = function(opts)
 
 					-- Create styled line
 					local line = NuiLine()
-					if M.icons.enable and icon_char then
+					if M.icons.enable then
 						line:append(NuiText(" ", "Comment")) -- Left padding
-						line:append(NuiText(icon_char .. " ", hl_group)) -- Icon with color
+						line:append(NuiText(icon .. " ", hl)) -- Icon with color
 					end
 					line:append(NuiText(dir, "Comment"))
 					line:append(NuiText(filename, "Normal"))
