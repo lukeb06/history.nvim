@@ -146,7 +146,19 @@ M.setup = function(opts)
 					local match = escape_pattern(cwd .. "/")
 					name = name:gsub(match, "")
 
-					local item = Menu.item(name, { bufnr = buf })
+					-- Split the name into directory and filename
+					local dir, filename = name:match("^(.*/)([^/]+)$")
+					if not dir then
+						filename = name
+						dir = ""
+					end
+
+					-- Create menu item with styled text
+					local item = Menu.item({
+						{ text = dir, hl = "Comment" },
+						{ text = filename, hl = "Normal" },
+					}, { bufnr = buf })
+
 					table.insert(lines, item)
 				end
 			end
