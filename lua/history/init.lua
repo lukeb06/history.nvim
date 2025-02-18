@@ -3,6 +3,16 @@ local M = {}
 local mini_icons_available, mini_icons = pcall(require, "mini.icons")
 local web_devicons_available = pcall(require, "nvim-web-devicons")
 
+local fallback_icons = {
+	default = "󰈚",
+	lua = "󰢱",
+	python = "󰌠",
+	javascript = "󰌞",
+	html = "󰄻",
+	css = "󰌜",
+	-- Add more filetypes as needed
+}
+
 M.buffers = {}
 
 M.get_history_file = function(mode)
@@ -77,7 +87,7 @@ M.setup = function(opts)
 			icons = {
 				enable = false,
 				style = "mini", -- 'mini' or 'web'
-				custom = {}, -- Override specific icons
+				custom = {},
 			},
 		}
 
@@ -88,14 +98,13 @@ M.setup = function(opts)
 		custom = {},
 	}, opts.icons or {})
 
-	-- Configure icon providers
+	-- Configure icon providers with safe access
 	M.icon_providers = {
 		mini = function(filetype)
-			if mini_icons_available then
-				-- Access icons through the correct mini.icons structure
+			if mini_icons_available and mini_icons.filetype then
 				return mini_icons.filetype[filetype] or mini_icons.common.file
 			end
-			return "󰈚" -- Fallback icon
+			return fallback_icons[filetype] or fallback_icons.default
 		end,
 		web = function(filetype, filename)
 			if web_devicons_available then
@@ -178,15 +187,14 @@ M.setup = function(opts)
 					local cwd = vim.fn.getcwd()
 					local ft = vim.bo[buf].filetype
 
-					-- Icon handling
+					-- Icon handling with safe fallbacks
 					local icon = ""
 					if M.icons.enable then
-						-- Get icon based on configuration
 						local icon_char = M.icons.custom[ft]
 							or M.icon_providers[M.icons.style](ft, name)
 							or M.icon_providers.mini(ft)
 
-						-- Fallback to mini if web provider failed
+						-- Fallback to mini style if web fails
 						if not icon_char and M.icons.style == "web" then
 							icon_char = M.icon_providers.mini(ft)
 						end
