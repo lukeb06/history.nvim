@@ -223,49 +223,50 @@ M.setup = function(opts)
 				focus_prev = { "k", "<Up>", backward_key },
 				close = { "<Esc>", "<C-c>" },
 				submit = { "<CR>", "<Space>" },
+				normal = {
+					["d"] = function(menu)
+						local item = menu:get_selected_item()
+						if item then
+							local bufnr = item.bufnr
+
+							-- Remove from M.buffers
+							for i, buf in ipairs(M.buffers) do
+								if buf == bufnr then
+									table.remove(M.buffers, i)
+									break
+								end
+							end
+
+							-- Delete buffer if loaded
+							if vim.api.nvim_buf_is_loaded(bufnr) then
+								vim.api.nvim_buf_delete(bufnr, { force = true })
+							end
+
+							-- Remove from menu
+							local new_items = {}
+							for _, menu_item in ipairs(menu.items) do
+								if menu_item.bufnr ~= bufnr then
+									table.insert(new_items, menu_item)
+								end
+							end
+							menu:update_items(new_items)
+
+							-- Close menu if empty
+							if #new_items == 0 then
+								menu:unmount()
+							else
+								-- Refresh the menu display
+								menu:redraw()
+							end
+						end
+					end,
+				},
 			},
 			on_close = function()
 				-- print("Menu Closed!")
 			end,
 			on_submit = function(item)
 				vim.api.nvim_set_current_buf(item.bufnr)
-			end,
-			on_key = function(event)
-				if event.key == "d" then
-					local item = menu:get_selected_item()
-					if item then
-						local bufnr = item.bufnr
-
-						-- Remove buffer from M.buffers
-						for i, buf in ipairs(M.buffers) do
-							if buf == bufnr then
-								table.remove(M.buffers, i)
-								break
-							end
-						end
-
-						-- Delete the buffer if loaded
-						if vim.api.nvim_buf_is_loaded(bufnr) then
-							vim.api.nvim_buf_delete(bufnr, { force = true })
-						end
-
-						-- Remove item from the menu
-						local new_items = {}
-						for _, menu_item in ipairs(menu.items) do
-							if menu_item.bufnr ~= bufnr then
-								table.insert(new_items, menu_item)
-							end
-						end
-						menu:update_items(new_items)
-
-						-- Close menu if no items left
-						if #new_items == 0 then
-							menu:unmount()
-						end
-
-						return true -- Prevent further processing of the key
-					end
-				end
 			end,
 		})
 
