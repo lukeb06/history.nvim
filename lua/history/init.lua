@@ -224,7 +224,7 @@ M.setup = function(opts)
 				close = { "<Esc>", "<C-c>" },
 				submit = { "<CR>", "<Space>" },
 				normal = {
-					["d"] = function(menu)
+					d = function(menu)
 						local item = menu:get_selected_item()
 						if item then
 							local bufnr = item.bufnr
@@ -243,20 +243,16 @@ M.setup = function(opts)
 							end
 
 							-- Remove from menu
-							local new_items = {}
-							for _, menu_item in ipairs(menu.items) do
-								if menu_item.bufnr ~= bufnr then
-									table.insert(new_items, menu_item)
-								end
-							end
+							local new_items = vim.tbl_filter(function(menu_item)
+								return menu_item.bufnr ~= bufnr
+							end, menu.items)
+
 							menu:update_items(new_items)
+							menu:redraw() -- Force redraw after update
 
 							-- Close menu if empty
 							if #new_items == 0 then
 								menu:unmount()
-							else
-								-- Refresh the menu display
-								menu:redraw()
 							end
 						end
 					end,
