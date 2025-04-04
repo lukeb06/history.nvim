@@ -223,40 +223,6 @@ M.setup = function(opts)
 				focus_prev = { "k", "<Up>", backward_key },
 				close = { "<Esc>", "<C-c>" },
 				submit = { "<CR>", "<Space>" },
-				normal = {
-					d = function(menu)
-						local item = menu:get_selected_item()
-						if item then
-							local bufnr = item.bufnr
-
-							-- Remove from M.buffers
-							for i, buf in ipairs(M.buffers) do
-								if buf == bufnr then
-									table.remove(M.buffers, i)
-									break
-								end
-							end
-
-							-- Delete buffer if loaded
-							if vim.api.nvim_buf_is_loaded(bufnr) then
-								vim.api.nvim_buf_delete(bufnr, { force = true })
-							end
-
-							-- Remove from menu
-							local new_items = vim.tbl_filter(function(menu_item)
-								return menu_item.bufnr ~= bufnr
-							end, menu.items)
-
-							menu:update_items(new_items)
-							menu:redraw() -- Force redraw after update
-
-							-- Close menu if empty
-							if #new_items == 0 then
-								menu:unmount()
-							end
-						end
-					end,
-				},
 			},
 			on_close = function()
 				-- print("Menu Closed!")
