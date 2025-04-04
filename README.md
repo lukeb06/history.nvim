@@ -1,6 +1,9 @@
 # history.nvim
 
 ![https://github.com/lukeb06/history.nvim/blob/master/.github/screenshot.png](https://github.com/lukeb06/history.nvim/blob/master/.github/screenshot.png?raw=true)
+<a href="https://dotfyle.com/plugins/lukeb06/history.nvim">
+<img src="https://dotfyle.com/plugins/lukeb06/history.nvim/shield" />
+</a>
 
 ### A Neovim plugin for viewing and navigating your recently visited buffers.
 
