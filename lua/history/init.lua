@@ -227,7 +227,7 @@ M.setup = function(opts)
 				line:append(NuiText(dir, "Comment"))
 				line:append(NuiText(filename, "Normal"))
 
-				local item = Menu.item(line, { filpath = filepath })
+				local item = Menu.item(line, { filepath = filepath })
 				table.insert(lines, item)
 			end
 		end
