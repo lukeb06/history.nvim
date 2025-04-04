@@ -10,7 +10,12 @@ M.get_history_file = function(mode)
 	local history_dir = data_dir .. "/history.nvim"
 	vim.fn.mkdir(history_dir, "p")
 
-	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub("\\.", "-") .. ".json"
+	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_") .. ".json"
+
+	if filename:match("^[_-]") then
+		filename = filename:sub(2)
+	end
+
 	local path = history_dir .. "/" .. filename
 
 	if mode == "r" then
@@ -24,11 +29,17 @@ M.get_history_file = function(mode)
 	return io.open(path, mode)
 end
 
+M.get_filepath_from_bufnr = function(bufnr)
+	local filename = vim.api.nvim_buf_get_name(bufnr)
+
+	return filename
+end
+
 M.save_buffers = function()
 	local bufs = {}
-	for _, buf in ipairs(M.buffers) do
-		if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buflisted then
-			table.insert(bufs, vim.api.nvim_buf_get_name(buf))
+	for _, filename in ipairs(M.buffers) do
+		if vim.fn.filereadable(filename) == 1 then
+			table.insert(bufs, filename)
 		end
 	end
 
@@ -57,12 +68,29 @@ M.load_buffers = function()
 
 		M.buffers = {}
 
-		for _, bufname in ipairs(bufs) do
-			if vim.fn.filereadable(bufname) == 1 then
-				vim.cmd("silent! edit " .. vim.fn.fnameescape(bufname))
-			end
+		for _, filename in ipairs(bufs) do
+			M.add_file_to_history(filename)
 		end
 	end)
+end
+
+-- Open the file and return the buffer number
+M.open_file = function(filename)
+	if vim.fn.filereadable(filename) == 1 then
+		vim.cmd("silent! edit " .. vim.fn.fnameescape(filename))
+		return vim.fn.bufnr("%")
+	end
+
+	return nil
+end
+
+M.add_file_to_history = function(filename)
+	table.insert(M.buffers, filename)
+end
+
+M.get_filetype_from_filepath = function(filepath)
+	local filetype = vim.fn.fnamemodify(filepath, ":t:e")
+	return filetype
 end
 
 M.setup = function(opts)
@@ -97,14 +125,16 @@ M.setup = function(opts)
 		callback = function()
 			local bufnr = vim.fn.bufnr("%")
 			local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
+			local filename = M.get_filepath_from_bufnr(bufnr)
+
 			if buftype ~= "nofile" then
 				for i, buf in ipairs(M.buffers) do
-					if buf == bufnr then
+					if buf == filename then
 						table.remove(M.buffers, i)
 					end
 				end
 
-				table.insert(M.buffers, bufnr)
+				M.add_file_to_history(filename)
 			end
 		end,
 	})
@@ -157,46 +187,42 @@ M.setup = function(opts)
 			M.icons.enable = false
 		end
 
-		for _, buf in ipairs(M.buffers) do
-			if vim.api.nvim_buf_is_valid(buf) then
-				local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
-				if buftype ~= "nofile" then
-					local name = vim.api.nvim_buf_get_name(buf)
-					local cwd = vim.fn.getcwd()
-					local ft = vim.bo[buf].filetype
+		for _, name in ipairs(M.buffers) do
+			if vim.fn.filereadable(name) == 1 then
+				local cwd = vim.fn.getcwd()
+				local ft = M.get_filetype_from_filepath(name)
 
-					-- Get icon with custom override
-					local icon, hl = " ", "Normal"
-					if M.icons.enable then
-						-- Use custom icon if defined
-						if M.icons.custom[ft] then
-							icon = M.icons.custom[ft]
-						else
-							icon, hl = web_devicons.get_icon(name, ft)
-						end
-						icon = icon or " " -- Fallback to space if no icon found
+				-- Get icon with custom override
+				local icon, hl = " ", "Normal"
+				if M.icons.enable then
+					-- Use custom icon if defined
+					if M.icons.custom[ft] then
+						icon = M.icons.custom[ft]
+					else
+						icon, hl = web_devicons.get_icon(name, ft)
 					end
-
-					local match = escape_pattern(cwd .. "/")
-					name = name:gsub(match, "")
-
-					-- Split path components
-					local dir, filename = name:match("^(.*/)([^/]+)$")
-					dir = dir or ""
-					filename = filename or name
-
-					-- Create styled line
-					local line = NuiLine()
-					if M.icons.enable then
-						line:append(NuiText(" ", "Comment")) -- Left padding
-						line:append(NuiText(icon .. " ", hl)) -- Icon with color
-					end
-					line:append(NuiText(dir, "Comment"))
-					line:append(NuiText(filename, "Normal"))
-
-					local item = Menu.item(line, { bufnr = buf })
-					table.insert(lines, item)
+					icon = icon or " " -- Fallback to space if no icon found
 				end
+
+				local match = escape_pattern(cwd .. "/")
+				name = name:gsub(match, "")
+
+				-- Split path components
+				local dir, filename = name:match("^(.*/)([^/]+)$")
+				dir = dir or ""
+				filename = filename or name
+
+				-- Create styled line
+				local line = NuiLine()
+				if M.icons.enable then
+					line:append(NuiText(" ", "Comment")) -- Left padding
+					line:append(NuiText(icon .. " ", hl)) -- Icon with color
+				end
+				line:append(NuiText(dir, "Comment"))
+				line:append(NuiText(filename, "Normal"))
+
+				local item = Menu.item(line, { filename = name })
+				table.insert(lines, item)
 			end
 		end
 
@@ -228,7 +254,8 @@ M.setup = function(opts)
 				-- print("Menu Closed!")
 			end,
 			on_submit = function(item)
-				vim.api.nvim_set_current_buf(item.bufnr)
+				-- vim.api.nvim_set_current_buf(item.bufnr)
+				M.open_file(item.filename)
 			end,
 		})
 
