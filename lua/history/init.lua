@@ -10,7 +10,12 @@ M.get_history_file = function(mode)
 	local history_dir = data_dir .. "/history.nvim"
 	vim.fn.mkdir(history_dir, "p")
 
-	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_"):gsub("\\.", "-") .. ".json"
+	local filename = vim.fn.getcwd():gsub("/", "-"):gsub(" ", "_") .. ".json"
+
+	if filename:match("^[_-]") then
+		filename = filename:sub(2)
+	end
+
 	local path = history_dir .. "/" .. filename
 
 	if mode == "r" then
@@ -83,8 +88,6 @@ M.add_file_to_history = function(filename)
 	table.insert(M.buffers, filename)
 end
 
--- Recieves a filepath ex. "/Users/lukebarrier/repos/history.nvim/lua/history/init.lua" and returns the filetype ex. "lua"
--- DO NOT LOAD THIS FILE INTO NEOVIM
 M.get_filetype_from_filepath = function(filepath)
 	local filetype = vim.fn.fnamemodify(filepath, ":t:e")
 	return filetype
