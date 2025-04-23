@@ -288,6 +288,7 @@ M.setup = function(opts)
 
 	vim.api.nvim_create_user_command("HistoryDelete", function()
 		M.delete_history_file()
+		M.history = {}
 		vim.cmd("silent! w|%bd|e#|bd#")
 	end, { desc = "Delete history file" })
 end
