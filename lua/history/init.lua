@@ -4,9 +4,7 @@ M.history = {}
 
 M.icons = { enable = false, custom = {} }
 
--- Returns a file handle to the workspace history file
-M.get_history_file = function(mode)
-	mode = mode or "w"
+M.get_history_file_path = function()
 	local data_dir = vim.fn.stdpath("data")
 	local history_dir = data_dir .. "/history.nvim"
 	vim.fn.mkdir(history_dir, "p")
@@ -19,6 +17,14 @@ M.get_history_file = function(mode)
 
 	local path = history_dir .. "/" .. filename
 
+	return path
+end
+
+-- Returns a file handle to the workspace history file
+M.get_history_file = function(mode)
+	mode = mode or "w"
+	local path = M.get_history_file_path()
+
 	if mode == "r" then
 		local file = io.open(path, "r")
 		if not file then
@@ -28,6 +34,11 @@ M.get_history_file = function(mode)
 	end
 
 	return io.open(path, mode)
+end
+
+M.delete_history_file = function()
+	local path = M.get_history_file_path()
+	os.remove(path)
 end
 
 -- Self-explanatory
@@ -274,6 +285,12 @@ M.setup = function(opts)
 	vim.keymap.set("n", forward_key, function()
 		create_menu()
 	end, { desc = "History Menu", silent = true })
+
+	vim.api.nvim_create_user_command("HistoryDelete", function()
+		M.delete_history_file()
+		M.history = {}
+		vim.cmd("silent! w|%bd|e#|bd#")
+	end, { desc = "Delete history file" })
 end
 
 return M
